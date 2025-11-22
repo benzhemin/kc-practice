@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+      #KC_HOSTNAME: keycloak.local
+    command:
+      - start-dev
+    networks:
+      keycloak-net:
+        ipv4_address: 172.20.0.10  # Custom IP (not 127.*)
+    ports:
+      - "3081:8080"
+    extra_hosts:
+      # Allow Keycloak to resolve host.docker.internal
+      - "host.docker.internal:host-gateway"
+
+networks:
+  keycloak-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

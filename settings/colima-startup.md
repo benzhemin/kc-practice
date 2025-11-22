@@ -1,0 +1,1 @@
+colima start --cpu 1 --memory 2 --disk 10

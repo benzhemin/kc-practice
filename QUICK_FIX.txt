@@ -1,0 +1,72 @@
+═══════════════════════════════════════════════════════════════════
+  QUICK FIX: Proxy Not Capturing OAuth2 Traffic
+═══════════════════════════════════════════════════════════════════
+
+PROBLEM:
+  Traffic goes directly to localhost:3081 instead of proxy:8888
+  
+ROOT CAUSE:
+  Reactor Netty has HARDCODED bypass for "localhost" and "127.*"
+  Cannot be disabled with configuration!
+
+SOLUTION:
+  Use custom hostname that doesn't match hardcoded patterns
+
+═══════════════════════════════════════════════════════════════════
+
+AUTOMATED FIX (RECOMMENDED):
+  
+  ./setup-proxy-hostname.sh
+  ./mitm-proxy.sh
+  ./gradlew bootRun --args='--spring.profiles.active=proxy'
+  open http://localhost:8080/login
+
+═══════════════════════════════════════════════════════════════════
+
+MANUAL FIX:
+
+1. Add to /etc/hosts:
+   
+   sudo nano /etc/hosts
+   # Add: 127.0.0.1  keycloak.local
+
+2. Update application-proxy.yml:
+   
+   # Change all "localhost:3081" to "keycloak.local:3081"
+   sed -i '' 's|localhost:3081|keycloak.local:3081|g' \
+     src/main/resources/application-proxy.yml
+
+3. Restart:
+   
+   ./mitm-proxy.sh
+   ./gradlew bootRun --args='--spring.profiles.active=proxy'
+   open http://localhost:8080/login
+
+═══════════════════════════════════════════════════════════════════
+
+VERIFY SUCCESS:
+
+In mitmproxy, you should see:
+  ✅ POST http://keycloak.local:3081/.../token
+  ✅ GET  http://keycloak.local:3081/.../certs
+  ✅ GET  http://keycloak.local:3081/.../userinfo
+
+In application logs:
+  [xxx, L:/127.0.0.1:xxx - R:localhost/127.0.0.1:8888]
+                                                  ^^^^
+                                          Port 8888 = Proxy!
+
+═══════════════════════════════════════════════════════════════════
+
+WHY IT WORKS:
+
+  "localhost"      → Hardcoded bypass ❌
+  "127.0.0.1"      → Hardcoded bypass ❌
+  "keycloak.local" → No bypass! ✅
+
+═══════════════════════════════════════════════════════════════════
+
+For detailed explanation, see: FINAL_SOLUTION.md
+
+═══════════════════════════════════════════════════════════════════
+

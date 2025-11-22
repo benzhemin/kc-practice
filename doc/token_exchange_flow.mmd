@@ -1,0 +1,61 @@
+%% OAuth2 Authorization Code Flow - Token Exchange
+%% This diagram shows where the token exchange happens in the OAuth2 flow
+
+sequenceDiagram
+    participant Browser as User Browser
+    participant Spring as Spring Boot<br/>(localhost:8080)
+    participant Keycloak as Keycloak<br/>(localhost:3081)
+
+    Note over Browser,Keycloak: 1. User tries to access protected resource
+    Browser->>Spring: GET /user
+    Spring->>Spring: Check authentication
+    Note over Spring: User not authenticated
+    
+    Note over Browser,Keycloak: 2. Redirect to OAuth2 login page
+    Spring-->>Browser: 302 Redirect to /login
+    Browser->>Spring: GET /login
+    Spring-->>Browser: 200 OK (HTML with OAuth2 link)
+    
+    Note over Browser,Keycloak: 3. User clicks OAuth2 login link
+    Browser->>Spring: GET /oauth2/authorization/keycloak
+    Spring->>Spring: Generate authorization request
+    Note over Spring: state=abc123<br/>nonce=def456
+    
+    Note over Browser,Keycloak: 4. Redirect to Keycloak authorization endpoint
+    Spring-->>Browser: 302 Redirect to Keycloak
+    Browser->>Keycloak: GET /realms/dev-realm/protocol/openid-connect/auth<br/>?response_type=code<br/>&client_id=app-client<br/>&redirect_uri=http://localhost:8080/login/oauth2/code/gateway<br/>&scope=openid profile email<br/>&state=abc123<br/>&nonce=def456
+    
+    Note over Browser,Keycloak: 5. User enters credentials
+    Keycloak-->>Browser: 200 OK (Login form)
+    Browser->>Keycloak: POST /login-actions/authenticate<br/>(username & password)
+    Keycloak->>Keycloak: Validate credentials
+    
+    Note over Browser,Keycloak: 6. Keycloak redirects with authorization code
+    Keycloak-->>Browser: 302 Redirect with code
+    Browser->>Spring: GET /login/oauth2/code/gateway<br/>?code=eyJhbGci...xyz<br/>&state=abc123
+    
+    rect rgb(255, 200, 200)
+        Note over Spring,Keycloak: 🔥 TOKEN EXCHANGE (Server-to-Server) 🔥<br/>This is what you want to capture!
+        Spring->>Spring: Validate state parameter
+        Spring->>Keycloak: POST /realms/dev-realm/protocol/openid-connect/token<br/>Content-Type: application/x-www-form-urlencoded<br/>Authorization: Basic YXBwLWNsaWVudDpt...<br/><br/>grant_type=authorization_code<br/>&code=eyJhbGci...xyz<br/>&redirect_uri=http://localhost:8080/login/oauth2/code/gateway<br/>&client_id=app-client<br/>&client_secret=mEFz9aF5WBb6OAYRPVYm3rlTn3ylCBeF
+        
+        Note over Keycloak: Validate:<br/>- Authorization code<br/>- Client credentials<br/>- Redirect URI
+        
+        Keycloak-->>Spring: 200 OK<br/>Content-Type: application/json<br/><br/>{<br/>  "access_token": "eyJhbGci...",<br/>  "token_type": "Bearer",<br/>  "expires_in": 300,<br/>  "refresh_token": "eyJhbGci...",<br/>  "id_token": "eyJhbGci...",<br/>  "scope": "openid profile email"<br/>}
+    end
+    
+    Note over Browser,Keycloak: 8. Spring validates tokens and creates session
+    Spring->>Spring: Validate JWT signature<br/>Extract user info<br/>Create authentication
+    
+    Note over Browser,Keycloak: 9. Redirect to success URL
+    Spring-->>Browser: 302 Redirect to /
+    Browser->>Spring: GET /
+    Spring-->>Browser: 200 OK "Hello, World!"
+    
+    Note over Browser,Keycloak: 10. User can now access protected resources
+    Browser->>Spring: GET /user
+    Spring->>Spring: Check authentication<br/>(authenticated ✓)
+    Spring-->>Browser: 200 OK<br/>{<br/>  "name": "johndoe",<br/>  "email": "john.doe@example.com",<br/>  ...<br/>}
+
+    Note over Browser,Keycloak: How to capture the token exchange:<br/>1. Use WebClientConfig.java (logs to console)<br/>2. Use mitmproxy (./run-with-proxy.sh)<br/>3. Use Charles Proxy<br/>4. Enable TRACE logging in application.yml
+

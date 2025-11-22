@@ -1,0 +1,77 @@
+sequenceDiagram
+    participant User as User/Browser
+    participant FE as Frontend App
+    participant KC as Keycloak Server
+    participant GW as Spring Gateway
+    participant MS as Microservice
+    participant Cache as Redis Cache
+
+    Note over User,Cache: PHASE 1: INITIAL AUTHENTICATION (OAuth2 Authorization Code Flow)
+    
+    User->>FE: 1. Access protected resource
+    FE->>FE: 2. Check token in storage
+    FE->>KC: 3. GET /auth/realms/{realm}/protocol/openid-connect/auth<br/>?client_id&redirect_uri&response_type=code&scope=openid
+    KC->>User: 4. Show login page
+    User->>KC: 5. POST credentials
+    KC->>KC: 6. Validate credentials<br/>7. Create session<br/>8. Generate auth code
+    KC->>FE: 9. 302 Redirect with code
+    
+    FE->>KC: 10. POST /token<br/>grant_type=authorization_code<br/>code=AUTH_CODE
+    KC->>KC: 11. Validate code<br/>12. Generate JWT access_token<br/>13. Sign with private key<br/>14. Generate refresh_token
+    KC->>FE: 15. Return tokens<br/>{access_token, refresh_token, expires_in}
+    FE->>FE: 16. Store tokens<br/>17. Set refresh timer
+
+    Note over User,Cache: PHASE 2: API REQUEST WITH TOKEN VALIDATION
+    
+    User->>FE: 18. User action (e.g., get profile)
+    FE->>GW: 19. GET /api/users/profile<br/>Authorization: Bearer {JWT}
+    
+    GW->>GW: 20. Extract Bearer token<br/>21. Parse JWT header (get 'kid')
+    GW->>KC: 22. GET /certs (JWKS endpoint)
+    KC->>GW: 23. Return public keys
+    GW->>GW: 24. Cache public keys<br/>25. Verify JWT signature<br/>26. Validate claims (exp, iss, aud)<br/>27. Extract roles from token
+    GW->>GW: 28. Check authorization rules<br/>29. Add custom headers<br/>30. Route resolution
+    
+    GW->>MS: 31. GET /users/profile<br/>Authorization: Bearer {JWT}<br/>X-Auth-User-Id: {sub}<br/>X-Auth-User-Roles: {roles}
+    
+    Note over MS: MICROSERVICE TOKEN VALIDATION
+    
+    MS->>MS: 32. BearerTokenFilter extracts token
+    MS->>KC: 33. GET /.well-known/openid-configuration
+    KC->>MS: 34. OIDC config with jwks_uri
+    MS->>KC: 35. GET /certs
+    KC->>MS: 36. Return JWKS
+    MS->>MS: 37. Initialize JwtDecoder<br/>38. Validate signature<br/>39. Validate claims<br/>40. Extract authorities<br/>41. Create Authentication object<br/>42. Set SecurityContext
+    MS->>MS: 43. @PreAuthorize check<br/>44. Execute business logic
+    MS->>GW: 45. Return response
+    GW->>FE: 46. Return response
+    FE->>User: 47. Display data
+
+    Note over User,Cache: PHASE 3: TOKEN REFRESH
+    
+    FE->>FE: 48. Token expiry timer triggers
+    FE->>KC: 49. POST /token<br/>grant_type=refresh_token<br/>refresh_token={REFRESH_TOKEN}
+    KC->>KC: 50. Validate refresh token<br/>51. Check session active<br/>52. Generate new access_token<br/>53. Rotate refresh_token
+    KC->>FE: 54. Return new tokens
+    FE->>FE: 55. Update stored tokens
+
+    Note over User,Cache: PHASE 4: LOGOUT & REVOCATION
+    
+    User->>FE: 56. Click logout
+    FE->>KC: 57. POST /logout<br/>refresh_token={REFRESH_TOKEN}
+    KC->>KC: 58. Invalidate session<br/>59. Revoke tokens
+    KC->>Cache: 60. Publish revocation event<br/>PUBLISH token:revoked {jti}
+    Cache->>GW: 61. Revocation event
+    GW->>GW: 62. Add to blacklist cache
+    Cache->>MS: 63. Revocation event
+    MS->>MS: 64. Add to blacklist cache
+    KC->>FE: 65. 204 No Content
+    FE->>FE: 66. Clear storage
+    FE->>User: 67. Redirect to login
+
+    Note over User,Cache: PHASE 5: SERVICE-TO-SERVICE (Client Credentials)
+    
+    MS->>KC: 68. POST /token<br/>grant_type=client_credentials<br/>client_id=service&client_secret=SECRET
+    KC->>KC: 69. Validate service credentials<br/>70. Generate service token
+    KC->>MS: 71. Return service access_token
+    MS->>MS: 72. Call downstream service<br/>with service token

@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: api-gateway-keycloak
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: app-client
+            client-secret: mEFz9aF5WBb6OAYRPVYm3rlTn3ylCBeF
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/gateway"
+
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak.local:3081/realms/dev-realm
+            user-name-attribute: preferred_username
+
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak.local:3081/realms/dev-realm
+          jwk-set-uri: http://keycloak.local:3081/realms/dev-realm/protocol/openid-connect/certs
+
+server:
+  port: 8080
+
+# Proxy Configuration (for capturing OAuth2 token exchange)
+proxy:
+  enabled: true  # Set to true to enable proxy
+  host: localhost
+  port: 8888
+  type: HTTP  # Options: HTTP, SOCKS4, SOCKS5
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework.security.oauth2: TRACE
+    org.springframework.web.reactive.function.client: TRACE
+    reactor.netty.http.client: DEBUG
+    com.zz.gateway: DEBUG
+    
+    # This will show the actual token exchange with Keycloak
+    org.springframework.security.oauth2.client.endpoint: TRACE
+    org.springframework.security.oauth2.client.web: TRACE

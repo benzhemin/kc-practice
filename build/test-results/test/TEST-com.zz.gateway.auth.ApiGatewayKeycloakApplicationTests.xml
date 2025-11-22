@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.zz.gateway.auth.ApiGatewayKeycloakApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2025-11-22T08:53:01.360Z" hostname="Sams-MacBook-Pro.local" time="0.422">
+  <properties/>
+  <testcase name="contextLoads()" classname="com.zz.gateway.auth.ApiGatewayKeycloakApplicationTests" time="0.422"/>
+  <system-out><![CDATA[16:53:00.169 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.zz.gateway.auth.ApiGatewayKeycloakApplicationTests]: ApiGatewayKeycloakApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:53:00.205 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.zz.gateway.auth.ApiGatewayKeycloakApplication for test class com.zz.gateway.auth.ApiGatewayKeycloakApplicationTests
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2025-11-22T16:53:00.372+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] z.g.a.ApiGatewayKeycloakApplicationTests : Starting ApiGatewayKeycloakApplicationTests using Java 21.0.8 with PID 71181 (started by sam in /Users/sam/Desktop/test/keycloak-practice)
+2025-11-22T16:53:00.372+08:00 DEBUG 71181 --- [api-gateway-keycloak] [    Test worker] z.g.a.ApiGatewayKeycloakApplicationTests : Running with Spring Boot v3.3.5, Spring v6.1.14
+2025-11-22T16:53:00.372+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] z.g.a.ApiGatewayKeycloakApplicationTests : No active profile set, falling back to 1 default profile: "default"
+2025-11-22T16:53:00.750+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.cloud.context.scope.GenericScope     : BeanFactory id=ed58085c-455a-3b01-b519-c090401be1d9
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [After]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Before]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Between]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Cookie]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Header]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Host]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Method]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Path]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Query]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [ReadBody]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [RemoteAddr]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [XForwardedRemoteAddr]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [Weight]
+2025-11-22T16:53:01.177+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.c.g.r.RouteDefinitionRouteLocator    : Loaded RoutePredicateFactory [CloudFoundryRouteService]
+2025-11-22T16:53:01.241+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2025-11-22T16:53:01.358+08:00  INFO 71181 --- [api-gateway-keycloak] [    Test worker] z.g.a.ApiGatewayKeycloakApplicationTests : Started ApiGatewayKeycloakApplicationTests in 1.109 seconds (process running for 1.52)
+]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/Users/sam/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.19/154da3a65b4f4a909d3e5bdec55d1b2b4cbb6ce1/byte-buddy-agent-1.14.19.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

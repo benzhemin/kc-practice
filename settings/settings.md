@@ -6,7 +6,11 @@ client-id:app-client
 - Authorization on
 
 home url: http://localhost:8080
-valid redirect-url: http://localhost:8080/login/oauth2/code/*
+valid redirect-url: 
+http://localhost:8080/login/oauth2/code/*
+http://localhost:8080/*
+http://localhost:8080
+
 post-logout-url: http://localhost:8080
 
 Create roles

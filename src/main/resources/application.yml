@@ -6,15 +6,15 @@ spring:
     oauth2:
       client:
         registration:
-          keycloak:
+          gateway:
             client-id: app-client
-            client-secret: mEFz9aF5WBb6OAYRPVYm3rlTn3ylCBeF
+            client-secret: XRBqXuBkiYolJ8I5Ouv9h9hnfT3FN3yP
             scope: openid,profile,email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/gateway"
 
         provider:
-          keycloak:
+          gateway:
             issuer-uri: http://keycloak.local:3081/realms/dev-realm
             user-name-attribute: preferred_username
 

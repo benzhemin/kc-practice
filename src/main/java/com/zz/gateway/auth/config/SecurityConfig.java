@@ -1,5 +1,6 @@
 package com.zz.gateway.auth.config;
 
+import com.zz.gateway.auth.oauth2.CustomOAuth2AuthenticationManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -17,7 +18,9 @@ import java.net.URI;
 public class SecurityConfig {
 
   @Bean
-  public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+  public SecurityWebFilterChain securityWebFilterChain(
+      ServerHttpSecurity http,
+      CustomOAuth2AuthenticationManager customAuthenticationManager) {
     http
         .authorizeExchange(exchanges -> exchanges
             .pathMatchers("/actuator/**").permitAll() // Allow health checks
@@ -25,6 +28,11 @@ public class SecurityConfig {
             .anyExchange().authenticated() // All other requests require authentication
         )
         .oauth2Login(oauth2 -> oauth2
+            // ⭐ USE CUSTOM AUTHENTICATION MANAGER
+            // This intercepts the OAuth2 authorization code flow
+            // and gives you full control over token exchange
+            .authenticationManager(customAuthenticationManager)
+            
             // 1. AUTHENTICATION SUCCESS HANDLER
             // Called after successful OAuth2 login
             .authenticationSuccessHandler(

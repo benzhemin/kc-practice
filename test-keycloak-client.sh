@@ -150,3 +150,4 @@ echo "5. Client doesn't exist or is in wrong realm"
 echo "   → Verify client 'app-client' exists in realm '${REALM}'"
 echo ""
 
+

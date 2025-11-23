@@ -28,7 +28,7 @@ server:
 
 # Proxy Configuration (for capturing OAuth2 token exchange)
 proxy:
-  enabled: true  # Set to true to enable proxy
+  enabled: false  # Set to true to enable proxy
   host: localhost
   port: 8888
   type: HTTP  # Options: HTTP, SOCKS4, SOCKS5

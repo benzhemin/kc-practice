@@ -1,0 +1,80 @@
+sequenceDiagram
+    participant User as User Browser
+    participant App as Spring Boot App
+    participant Security as Spring Security
+    participant CustomAuth as CustomOAuth2AuthenticationManager
+    participant TokenService as CustomOAuth2TokenExchangeService
+    participant Keycloak as Keycloak Server
+
+    Note over User,Keycloak: Phase 1: Initial Request & Redirect to Login
+
+    User->>App: GET /api/users
+    App->>Security: Check authentication
+    Security-->>User: 302 Redirect to Keycloak
+    Note right of Security: User not authenticated
+
+    User->>Keycloak: GET /auth?client_id=...&redirect_uri=...
+    Note over Keycloak: User enters credentials
+    Keycloak-->>User: 302 Redirect with code
+    Note right of Keycloak: code=ABC123&state=xyz
+
+    Note over User,Keycloak: Phase 2: Authorization Code Callback
+
+    User->>App: GET /login/oauth2/code/gateway?code=ABC123
+    App->>Security: Process OAuth2 callback
+    Security->>CustomAuth: authenticate(OAuth2AuthorizationCodeAuthenticationToken)
+    
+    Note over CustomAuth: 🔐 CUSTOM AUTHENTICATION MANAGER INVOKED
+    Note over CustomAuth: Extract code: ABC123
+    
+    Note over User,Keycloak: Phase 3: Token Exchange (YOUR CUSTOM CODE)
+
+    CustomAuth->>TokenService: exchangeCodeForTokens(code, redirectUri, clientRegistration)
+    
+    Note over TokenService: 🔄 CUSTOM TOKEN EXCHANGE STARTED
+    Note over TokenService: Build token request parameters
+    
+    TokenService->>Keycloak: POST /token<br/>grant_type=authorization_code<br/>code=ABC123<br/>client_id=app-client<br/>client_secret=***
+    
+    Note over Keycloak: Validate code<br/>Generate tokens
+    
+    Keycloak-->>TokenService: 200 OK<br/>{<br/>  "access_token": "eyJ...",<br/>  "id_token": "eyJ...",<br/>  "refresh_token": "eyJ...",<br/>  "expires_in": 300<br/>}
+    
+    Note over TokenService: ✅ TOKEN EXCHANGE SUCCESSFUL
+    Note over TokenService: 🎫 Log tokens (masked)
+    Note over TokenService: 💾 Optional: Store in DB
+    
+    TokenService-->>CustomAuth: OAuth2AccessTokenResponse
+    
+    Note over User,Keycloak: Phase 4: User Authentication
+
+    CustomAuth->>CustomAuth: buildAuthenticatedUser(tokenResponse)
+    CustomAuth->>Keycloak: GET /certs (JWK Set)
+    Keycloak-->>CustomAuth: Public keys
+    
+    Note over CustomAuth: 🔍 Decode & validate ID token
+    Note over CustomAuth: 👤 Extract user info:<br/>- username<br/>- email<br/>- name
+    Note over CustomAuth: 🔑 Extract roles:<br/>- realm_access.roles<br/>- resource_access.roles
+    
+    CustomAuth->>CustomAuth: Create OAuth2AuthenticationToken
+    
+    Note over CustomAuth: ✅ AUTHENTICATION SUCCESSFUL
+    
+    CustomAuth-->>Security: OAuth2AuthenticationToken
+    Security->>Security: Store in SecurityContext
+    
+    Note over User,Keycloak: Phase 5: Success & Redirect
+
+    Security-->>User: 302 Redirect to /
+    User->>App: GET /
+    App-->>User: 200 OK<br/>"Hello, World! You are authenticated!"
+    
+    Note over User,App: User is now authenticated<br/>Can access protected resources
+
+    Note over User,Keycloak: Subsequent Requests (No Re-authentication)
+
+    User->>App: GET /api/users
+    App->>Security: Check authentication
+    Note over Security: User authenticated<br/>Session valid
+    App-->>User: 200 OK<br/>{user data}
+

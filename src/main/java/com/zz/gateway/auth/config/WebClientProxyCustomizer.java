@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.client.web.server.ServerOAuth2Authori
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.transport.ProxyProvider;
-
 import java.util.function.Consumer;
 
 /**
@@ -49,14 +48,15 @@ public class WebClientProxyCustomizer {
     public WebClient webClient(
             ReactiveClientRegistrationRepository clientRegistrations,
             ServerOAuth2AuthorizedClientRepository authorizedClients) {
-        
+
         if (proxyEnabled) {
             System.out.println("═══════════════════════════════════════════════════════════");
             System.out.println("🔧 CREATING WEBCLIENT WITH PROXY FOR OAUTH2");
             System.out.println("Proxy: " + proxyHost + ":" + proxyPort + " (" + proxyType + ")");
             System.out.println("═══════════════════════════════════════════════════════════");
 
-            // ⚠️ CRITICAL: Reactor Netty bypasses proxy for localhost AND resolved 127.* addresses!
+            // ⚠️ CRITICAL: Reactor Netty bypasses proxy for localhost AND resolved 127.*
+            // addresses!
             // Even using "keycloak.local" doesn't work because DNS resolves to 127.0.0.1
             // BEFORE the proxy check, and 127.* matches the hardcoded bypass pattern.
             //
@@ -65,7 +65,7 @@ public class WebClientProxyCustomizer {
             //
             // WORKAROUND: We'll configure the proxy anyway for documentation purposes,
             // but it won't work for localhost/127.* addresses.
-            
+
             System.out.println("⚠️  WARNING: Reactor Netty CANNOT proxy localhost or 127.* addresses!");
             System.out.println("⚠️  This is hardcoded in Reactor Netty and cannot be overridden.");
             System.out.println("⚠️  Even using 'keycloak.local' won't work (resolves to 127.0.0.1)");
@@ -75,40 +75,38 @@ public class WebClientProxyCustomizer {
             System.out.println("   2. Or use a real domain name (not resolving to 127.*)");
             System.out.println("   3. Or use Docker with container networking");
             System.out.println("");
-            
+
             Consumer<ProxyProvider.TypeSpec> proxySpec = proxy -> {
                 proxy.type(getProxyType(proxyType))
-                     .host(proxyHost)
-                     .port(proxyPort)
-                     .nonProxyHosts("");  // This doesn't help for 127.*
-                
+                        .host(proxyHost)
+                        .port(proxyPort)
+                        .nonProxyHosts(""); // This doesn't help for 127.*
+
                 System.out.println("🔧 Proxy configured: " + proxyHost + ":" + proxyPort);
                 System.out.println("   (Will only work for non-localhost addresses)");
             };
-            
+
             HttpClient httpClient = HttpClient.create()
                     .proxy(proxySpec)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000);
 
-            ServerOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
-                    new ServerOAuth2AuthorizedClientExchangeFilterFunction(
-                            clientRegistrations, authorizedClients);
+            ServerOAuth2AuthorizedClientExchangeFilterFunction oauth2 = new ServerOAuth2AuthorizedClientExchangeFilterFunction(
+                    clientRegistrations, authorizedClients);
 
             WebClient webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
                     .filter(oauth2)
                     .build();
-            
+
             System.out.println("✅ WebClient created with proxy - OAuth2 will use this");
             System.out.println("📌 Proxy will intercept: /token, /certs, /userinfo, /.well-known");
             System.out.println("═══════════════════════════════════════════════════════════");
-            
+
             return webClient;
         } else {
-            ServerOAuth2AuthorizedClientExchangeFilterFunction oauth2 =
-                    new ServerOAuth2AuthorizedClientExchangeFilterFunction(
-                            clientRegistrations, authorizedClients);
-            
+            ServerOAuth2AuthorizedClientExchangeFilterFunction oauth2 = new ServerOAuth2AuthorizedClientExchangeFilterFunction(
+                    clientRegistrations, authorizedClients);
+
             return WebClient.builder()
                     .filter(oauth2)
                     .build();
@@ -127,4 +125,3 @@ public class WebClientProxyCustomizer {
         };
     }
 }
-

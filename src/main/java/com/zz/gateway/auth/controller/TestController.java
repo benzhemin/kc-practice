@@ -14,9 +14,13 @@ import reactor.core.publisher.Mono;
 public class TestController {
   @GetMapping("/")
   public Mono<String> home() {
-    return Mono.just("Hello, World!");
+    return Mono.just("Hello, World! You are authenticated!");
   }
 
+  /**
+   * Get current authenticated user information
+   * This demonstrates how to access the user after custom authentication
+   */
   @GetMapping("/user")
   public Mono<Map<String, Object>> user(@AuthenticationPrincipal OidcUser principal) {
     Map<String, Object> user = new HashMap<>();
@@ -26,5 +30,18 @@ public class TestController {
     user.put("claims", principal.getClaims());
     user.put("roles", principal.getAuthorities());
     return Mono.just(user);
+  }
+
+  /**
+   * Protected API endpoint - requires authentication
+   * This will trigger the custom OAuth2 flow if user is not authenticated
+   */
+  @GetMapping("/api/users")
+  public Mono<Map<String, Object>> getUsers(@AuthenticationPrincipal OidcUser principal) {
+    Map<String, Object> response = new HashMap<>();
+    response.put("message", "This is a protected endpoint");
+    response.put("authenticated_user", principal.getName());
+    response.put("user_roles", principal.getAuthorities());
+    return Mono.just(response);
   }
 } 

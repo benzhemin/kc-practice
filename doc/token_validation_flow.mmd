@@ -1,0 +1,85 @@
+graph TB
+    Start([User Login Request]) --> AuthRedirect[Redirect to Keycloak]
+    AuthRedirect --> UserAuth[User Authenticates at Keycloak]
+    UserAuth --> AuthCode[Keycloak Returns Authorization Code]
+    AuthCode --> CustomManager[CustomOAuth2AuthenticationManager.authenticate]
+    
+    CustomManager --> TokenExchange[CustomOAuth2TokenExchangeService.exchangeCodeForTokens]
+    
+    subgraph "Token Exchange Process"
+        TokenExchange --> BuildRequest[Build Token Request]
+        BuildRequest --> SendRequest[POST to Keycloak /token endpoint]
+        SendRequest --> ReceiveTokens[Receive Tokens Response]
+        ReceiveTokens --> LogTokens[Log Token Details]
+        LogTokens --> BuildResponse[Build OAuth2AccessTokenResponse]
+    end
+    
+    BuildResponse --> DecodeToken[decodeIdToken]
+    
+    subgraph "Token Validation Process"
+        DecodeToken --> GetJWKSet[Get JWK Set URI from Config]
+        GetJWKSet --> CreateDecoder[Create NimbusJwtDecoder]
+        CreateDecoder --> ValidateToken[jwtDecoder.decode]
+        
+        ValidateToken --> CheckSig[✅ Validate Signature]
+        CheckSig --> CheckExp[✅ Validate Expiration]
+        CheckExp --> CheckIat[✅ Validate Issued At]
+        CheckIat --> CheckNbf[✅ Validate Not Before]
+        CheckNbf --> CheckIss[✅ Validate Issuer]
+        CheckIss --> TokenValid{Token Valid?}
+        
+        TokenValid -->|No| TokenError[Throw OAuth2AuthenticationException]
+        TokenValid -->|Yes| ConvertToken[Convert to OidcIdToken]
+    end
+    
+    ConvertToken --> ExtractClaims[Extract Claims from Token]
+    
+    subgraph "Custom Validation & User Building"
+        ExtractClaims --> CustomValidation{Custom Validations}
+        CustomValidation --> CheckEmail[Check email_verified]
+        CustomValidation --> CheckOrg[Check organization]
+        CustomValidation --> CheckCustom[Check custom claims]
+        
+        CheckEmail --> ExtractAuth[extractAuthorities]
+        CheckOrg --> ExtractAuth
+        CheckCustom --> ExtractAuth
+        
+        ExtractAuth --> RealmRoles[Extract realm_access.roles]
+        ExtractAuth --> ClientRoles[Extract resource_access.roles]
+        
+        RealmRoles --> MapRoles[Map to GrantedAuthority]
+        ClientRoles --> MapRoles
+        
+        MapRoles --> BuildUser[Build OidcUser]
+        BuildUser --> CreateAuthToken[Create OAuth2LoginAuthenticationToken]
+    end
+    
+    CreateAuthToken --> OptionalSync{Database Sync?}
+    OptionalSync -->|Yes| SyncUser[validateAndSyncUser]
+    OptionalSync -->|No| Success
+    SyncUser --> CheckDB{User Exists?}
+    CheckDB -->|No| CreateUser[Create New User]
+    CheckDB -->|Yes| UpdateUser[Update User Info]
+    CreateUser --> Success
+    UpdateUser --> Success
+    
+    Success[Authentication Successful] --> StoreContext[Store in SecurityContext]
+    StoreContext --> CreateSession[Create Session]
+    CreateSession --> End([User Authenticated ✅])
+    
+    TokenError --> FailHandler[Authentication Failure Handler]
+    FailHandler --> ErrorEnd([Authentication Failed ❌])
+    
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style ErrorEnd fill:#FFB6C1
+    style CheckSig fill:#87CEEB
+    style CheckExp fill:#87CEEB
+    style CheckIat fill:#87CEEB
+    style CheckNbf fill:#87CEEB
+    style CheckIss fill:#87CEEB
+    style CustomValidation fill:#FFD700
+    style ExtractAuth fill:#FFD700
+    style BuildUser fill:#FFD700
+    style SyncUser fill:#DDA0DD
+
